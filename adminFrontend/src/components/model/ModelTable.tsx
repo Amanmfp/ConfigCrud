@@ -13,7 +13,7 @@ type Props = {
   page: number;
   totalPages: number;
   onPageChange: (page: number) => void; // setPage from hook
-  onView:(row: any) => void;
+  onView?:(row: any) => void;
 };
  
 const ModelTable = ({

@@ -6,7 +6,7 @@ type Props = {
   data: Record<string, any>[];
   onSort: (field: string) => void;
   onEdit: (row: any) => void;
-  onView: (row: any) => void;
+  onView?: (row: any) => void;
   onDelete: (id: number) => void;
 };
 
@@ -122,6 +122,7 @@ const Table = ({ schema, data, onSort, onEdit, onDelete, onView }: Props) => {
 
               <td className="px-5 py-3.5 text-right">
                 <div className="flex items-center justify-end gap-2 opacity-70 group-hover:opacity-100 transition-opacity">
+                  {onView && (
                   <button
                     onClick={() => onView(row)}
                     className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium
@@ -136,6 +137,7 @@ const Table = ({ schema, data, onSort, onEdit, onDelete, onView }: Props) => {
                     </svg>
                     View
                   </button>
+                  )}
                   <button
                     onClick={() => onEdit(row)}
                     className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium
