@@ -13,11 +13,12 @@ type Props = {
   page: number;
   totalPages: number;
   onPageChange: (page: number) => void; // setPage from hook
+  onView:(row: any) => void;
 };
  
 const ModelTable = ({
   schema, data, search, onSearch,
-  onSort, onEdit, onDelete,
+  onSort, onEdit, onDelete, onView,
   page, totalPages, onPageChange,
 }: Props) => (
   <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
@@ -40,7 +41,7 @@ const ModelTable = ({
     </div>
  
     <div className="overflow-x-auto">
-      <Table schema={schema} data={data} onSort={onSort} onEdit={onEdit} onDelete={onDelete} />
+      <Table schema={schema} data={data} onSort={onSort} onEdit={onEdit} onView={onView} onDelete={onDelete} />
     </div>
  
     <div className="px-5 py-4 border-t border-gray-100 flex items-center justify-between">

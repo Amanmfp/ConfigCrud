@@ -1,10 +1,12 @@
 import type { Field, ModelUIConfig } from "../types/schema";
 import { productsUIConfig } from "./models/products";
 import { usersUIConfig }    from "./models/users";
+import { ordersUIConfig } from "./models/orders"
  
 const uiRegistry: Record<string, ModelUIConfig> = {
   products: productsUIConfig,
   users:    usersUIConfig,
+  orders:  ordersUIConfig
 };
  
 export const mergeWithUIConfig = (
