@@ -25,3 +25,11 @@ export const mergeWithUIConfig = (
     options:  apiField.options,
   }));
 };
+
+export const registeredModels = [
+  { name: "users",    label: "Users",    icon: "users"    },
+  { name: "products", label: "Products", icon: "package"  },
+  { name: "orders",   label: "Orders",   icon: "shopping" },
+] as const;
+ 
+export type RegisteredModel = typeof registeredModels[number];
