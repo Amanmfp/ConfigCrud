@@ -10,13 +10,29 @@ type Props = {
   schema: Schema;
   onSubmit: (data: any) => void;
   initialData?: any;
+  registerReset?: (fn: () => void) => void;
 };
  
-const FormRenderer = ({ schema, onSubmit, initialData }: Props) => {
-  const visibleFields = getVisibleFormFields(schema.fields);
+// Build empty default values from schema fields
+// Ensures reset() always puts fields back to a clean empty state
+const buildEmptyValues = (schema: Schema): Record<string, any> => {
+  const empty: Record<string, any> = {};
+  for (const field of schema.fields) {
+    if (field.hidden || field.readOnly || field.showInForm === false) continue;
+    switch (field.type) {
+      case "boolean":  empty[field.name] = false;  break;
+      case "number":   empty[field.name] = "";     break;
+      case "relation": empty[field.name] = field.multiple ? [] : ""; break;
+      default:         empty[field.name] = "";
+    }
+  }
+  return empty;
+};
  
-  // Build Zod schema from fields at runtime — no per-model config needed
-  const zodSchema = buildZodSchema(visibleFields);
+const FormRenderer = ({ schema, onSubmit, initialData, registerReset }: Props) => {
+  const visibleFields = getVisibleFormFields(schema.fields);
+  const zodSchema     = buildZodSchema(visibleFields);
+  const emptyValues   = buildEmptyValues(schema); // ← explicit empty state
  
   const {
     register,
@@ -26,21 +42,27 @@ const FormRenderer = ({ schema, onSubmit, initialData }: Props) => {
     formState: { errors, isSubmitting, isDirty },
   } = useForm({
     resolver: zodResolver(zodSchema),
-    defaultValues: initialData ?? {},
+    defaultValues: initialData ?? emptyValues,
   });
  
-  // When switching between edit items, reset form with new data
+  // Register reset fn once on mount — stable because registerReset
+  // is wrapped in useCallback in useModelPage
   useEffect(() => {
-    reset(initialData ?? {});
+    registerReset?.(() => reset(emptyValues)); // ← reset to explicit empty
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [registerReset]); // reset and emptyValues are stable, registerReset is useCallback
+ 
+  // When switching between edit items, fill form with that item's data
+  useEffect(() => {
+    if (initialData) {
+      reset(initialData);
+    }
   }, [initialData, reset]);
  
   const isEditing = !!initialData;
-
-  console.log("schema here", schema)
  
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
- 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
         {visibleFields.map((field) => (
           <div
@@ -57,7 +79,6 @@ const FormRenderer = ({ schema, onSubmit, initialData }: Props) => {
         ))}
       </div>
  
-      {/* Global form error count banner — shows when submit fails validation */}
       {Object.keys(errors).length > 0 && (
         <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-red-50 border border-red-200">
           <svg className="w-4 h-4 text-red-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -73,9 +94,7 @@ const FormRenderer = ({ schema, onSubmit, initialData }: Props) => {
         </div>
       )}
  
-      {/* Submit */}
       <div className="pt-2 flex items-center justify-between">
-        {/* Dirty state indicator */}
         {isDirty && (
           <p className="text-xs text-amber-600 flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />
@@ -118,5 +137,3 @@ const FormRenderer = ({ schema, onSubmit, initialData }: Props) => {
 };
  
 export default FormRenderer;
- 
- 

@@ -1,4 +1,4 @@
-// utils/buildZodSchema.ts — fixed for Zod v4
+// utils/buildZodSchema.ts
 
 import { z } from "zod";
 import type { Field } from "../types/schema";
@@ -15,21 +15,19 @@ export const buildZodSchema = (fields: Field[]): z.ZodObject<any> => {
 
     switch (field.type) {
       case "string":
-        schema = field.nullable
-          ? z.string().optional()
-          : z.string().min(1, `${label(field)} is required`); // ← v4: plain string, not { message }
+        schema = field.required
+          ? z.string().min(1, `${label(field)} is required`)
+          : z.string().optional();
         break;
 
       case "number":
-        // Zod v4: use z.coerce.number() instead of union+transform+pipe
-        // invalid_type_error is gone — use error: { message } or just a string
         schema = z.coerce.number({
-          error: `${label(field)} must be a valid number`, // ← v4 syntax
+          error: `${label(field)} must be a valid number`,
         });
-        if (!field.nullable) {
+        if (field.required) {
           schema = (schema as z.ZodNumber).refine(
             (val) => !isNaN(val),
-            `${label(field)} is required`  // ← v4: plain string
+            `${label(field)} is required`
           );
         } else {
           schema = schema.optional();
@@ -40,33 +38,31 @@ export const buildZodSchema = (fields: Field[]): z.ZodObject<any> => {
         schema = z.boolean().optional().default(false);
         break;
 
-      case "enum":
-        // Zod v4: errorMap is gone — use error as a plain string
-        // z.enum() takes a plain string[] now, no tuple cast needed
+      case "enum": {
         const options = field.options ?? [];
         schema =
           options.length > 0
-            ? z.enum(options as [string, ...string[]], `Select a valid ${label(field)}`) // ← v4: plain string as 2nd arg
+            ? z.enum(options as [string, ...string[]], `Select a valid ${label(field)}`)
             : z.string();
-        if (field.nullable) schema = schema.optional();
+        if (!field.required) schema = schema.optional();
         break;
+      }
 
       case "relation":
         if (field.multiple) {
           schema = z.array(z.number()).optional().default([]);
         } else {
-          // Zod v4: invalid_type_error gone — use error
           schema = z.coerce.number({
-            error: `${label(field)} is required`, // ← v4 syntax
+            error: `${label(field)} is required`,
           });
-          if (field.nullable) schema = schema.optional();
+          if (!field.required) schema = schema.optional();
         }
         break;
 
       case "date":
-        schema = field.nullable
-          ? z.string().optional()
-          : z.string().min(1, `${label(field)} is required`);
+        schema = field.required
+          ? z.string().min(1, `${label(field)} is required`)
+          : z.string().optional();
         break;
 
       default:

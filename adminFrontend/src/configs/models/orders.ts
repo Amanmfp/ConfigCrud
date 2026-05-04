@@ -1,37 +1,45 @@
-import type { Field } from "../../types/schema";
- 
-export const ordersFields: Field[] = [
-  {
-    name: "id", type: "number", hidden: true,
-    nullable: false
+import type { ModelUIConfig } from "../../types/schema";
+
+export const ordersUIConfig: ModelUIConfig = {
+  id: { hidden: true },
+
+  orderNo: {
+    label: "Order #",
+    order: 1,
+    colSpan: 1,
   },
-  {
-    name: "orderNo", type: "string", label: "Order #", order: 1,
-    nullable: false
+
+  status: {
+    label: "Status",
+    order: 2,
   },
-  {
-    name: "status", type: "enum", label: "Status", order: 2,
-    options: ["pending", "processing", "shipped", "delivered", "cancelled"],
-    nullable: false
+
+  userId: {
+    label: "Customer",
+    order: 3,
   },
-  {
-    name: "userId", type: "relation", relation: "users", label: "Customer", order: 3,
-    nullable: false
+
+  total: {
+    label: "Total (₹)",
+    order: 4,
+    showInForm: false,
+    readOnly: true,
   },
-  {
-    name: "total", type: "number", label: "Total (₹)", order: 4, showInForm: false, readOnly: true,
-    nullable: false
+
+  notes: {
+    label: "Notes",
+    order: 5,
+    colSpan: 2,
   },
-  {
-    name: "notes", type: "string", label: "Notes", order: 5, colSpan: 2,
-    nullable: false
+
+  createdAt: {
+    label: "Ordered On",
+    order: 6,
+    showInForm: false,
+    readOnly: true,
   },
-  {
-    name: "createdAt", type: "string", label: "Ordered On", order: 6, showInForm: false, readOnly: true,
-    nullable: false
+
+  updatedAt: {
+    hidden: true,
   },
-  {
-    name: "updatedAt", type: "string", hidden: true,
-    nullable: false
-  },
-];
+};

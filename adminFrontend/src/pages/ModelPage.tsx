@@ -27,7 +27,9 @@ const ModelPage = ({ model }: { model: string }) => {
       <div className="max-w-6xl mx-auto space-y-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 capitalize tracking-tight">{model}</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Manage and edit your {model.toLowerCase()} records</p>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Manage and edit your {model.toLowerCase()} records
+          </p>
         </div>
  
         <ModelTable
@@ -37,7 +39,7 @@ const ModelPage = ({ model }: { model: string }) => {
           onSearch={hook.handleSearch}
           onSort={hook.handleSort}
           onEdit={hook.handleEdit}
-          onDelete={hook.handleDelete}    // ← direct, no confirm
+          onDelete={hook.handleDelete}
           page={hook.page}
           totalPages={hook.totalPages}
           onPageChange={hook.setPage}
@@ -49,6 +51,7 @@ const ModelPage = ({ model }: { model: string }) => {
           editingItem={hook.editingItem}
           onSubmit={hook.handleSubmit}
           onCancelEdit={hook.handleCancelEdit}
+          registerReset={hook.registerReset}  // ← passed down
         />
       </div>
     </div>
@@ -56,3 +59,4 @@ const ModelPage = ({ model }: { model: string }) => {
 };
  
 export default ModelPage;
+ 

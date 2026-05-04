@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState, useCallback } from "react";
 import { useSchema } from "./useSchema";
 import { useData } from "./useData";
 import { useDeleteMutation } from "./mutations/useDeleteMutation";
@@ -20,6 +20,14 @@ export const useModelPage = (model: string) => {
   const [sortField, setSortField]     = useState<string | null>(null);
   const [sortOrder, setSortOrder]     = useState<"asc" | "desc">("asc");
   const [page, setPage]               = useState(1);
+ 
+  const resetFormRef = useRef<(() => void) | null>(null);
+ 
+  // ← useCallback: stable reference across renders
+  // FormRenderer's useEffect only fires once on mount
+  const registerReset = useCallback((fn: () => void) => {
+    resetFormRef.current = fn;
+  }, []); // empty deps — never recreated
  
   const filteredData = rawData.filter((item) =>
     Object.values(item).some((val) =>
@@ -51,7 +59,11 @@ export const useModelPage = (model: string) => {
   };
  
   const handleEdit       = (item: any) => setEditingItem(item);
-  const handleCancelEdit = () => setEditingItem(null);
+ 
+  const handleCancelEdit = () => {
+    setEditingItem(null);
+    resetFormRef.current?.();
+  };
  
   const handleDelete = (id: number) => deleteMutation.mutate(id);
  
@@ -59,10 +71,19 @@ export const useModelPage = (model: string) => {
     if (editingItem) {
       updateMutation.mutate(
         { id: editingItem.id, data: formData },
-        { onSuccess: () => setEditingItem(null) }
+        {
+          onSuccess: () => {
+            setEditingItem(null);
+            resetFormRef.current?.();
+          },
+        }
       );
     } else {
-      createMutation.mutate(formData);
+      createMutation.mutate(formData, {
+        onSuccess: () => {
+          resetFormRef.current?.();
+        },
+      });
     }
   };
  
@@ -83,6 +104,7 @@ export const useModelPage = (model: string) => {
     handleCancelEdit,
     isDeleting:   deleteMutation.isPending,
     isSubmitting: createMutation.isPending || updateMutation.isPending,
+    registerReset,  // ← stable reference now
   };
 };
  
