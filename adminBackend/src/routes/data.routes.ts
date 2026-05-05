@@ -28,6 +28,22 @@ router.get("/schema/:model", async (req: Request, res: Response) => {
   }
 });
  
+// ── GET /api/:model/:id — fetch one record (for view/edit pages) ───
+router.get(
+  "/:model/:id",
+  async (req: Request<{ model: string; id: string }>, res: Response) => {
+  try {
+    const Model = await getDynamicModel(req.params.model);
+    if (!Model) return res.status(404).json({ error: `Model "${req.params.model}" not found` });
+
+    const doc = await Model.findById(req.params.id).lean();
+    if (!doc) return res.status(404).json({ error: "Record not found" });
+    res.json(doc);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── GET /api/:model — list all records ────────────────────────────
 // Replaces: router.get("/users"), router.get("/products"), router.get("/orders")
 // One generic route handles ALL models now

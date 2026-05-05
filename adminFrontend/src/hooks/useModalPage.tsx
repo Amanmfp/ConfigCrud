@@ -116,7 +116,6 @@ import { useSchema } from "./useSchema";
 import { useData }   from "./useData";
 import { useDeleteMutation } from "./mutations/useDeleteMutation";
 import { useCreateMutation } from "./mutations/useCreateMutation";
-import { useUpdateMutation } from "./mutations/useUpdateMutation";
  
 const PAGE_SIZE = 10;
  
@@ -126,10 +125,18 @@ export const useModelPage = (model: string) => {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [page,      setPage]      = useState(1);
  
-  const { data: schema, isLoading: schemaLoading } = useSchema(model);
+  const {
+    data: schema,
+    isLoading: schemaLoading,
+    error: schemaError,
+  } = useSchema(model);
  
   // Pass search/sort/page to backend — server-side now
-  const { data: response, isLoading: dataLoading } = useData(model, {
+  const {
+    data: response,
+    isLoading: dataLoading,
+    error: dataError,
+  } = useData(model, {
     page,
     limit:  PAGE_SIZE,
     search,
@@ -139,7 +146,6 @@ export const useModelPage = (model: string) => {
  
   const deleteMutation = useDeleteMutation(model);
   const createMutation = useCreateMutation(model);
-  const updateMutation = useUpdateMutation(model);
  
   const resetFormRef  = useRef<(() => void) | null>(null);
   const registerReset = useCallback((fn: () => void) => {
@@ -170,6 +176,8 @@ export const useModelPage = (model: string) => {
  
   return {
     isLoading:    schemaLoading || dataLoading,
+    schemaError,
+    dataError,
     schema,
     // data now comes from backend paginated response
     data:         response?.data ?? [],

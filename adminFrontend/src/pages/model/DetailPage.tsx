@@ -1,10 +1,10 @@
 import { useNavigate } from "react-router-dom";
 import { useSchema } from "../../hooks/useSchema";
-import { useData } from "../../hooks/useData";
 import { getVisibleTableFields, getLabel } from "../../utils/fieldUtils";
+import { useItem } from "../../hooks/useItem";
 import PageHeader from "../../components/model/PageHeader";
  
-type Props = { model: string; id: number };
+type Props = { model: string; id: string };
  
 const formatValue = (value: any, fieldType: string): string => {
   if (value === null || value === undefined || value === "") return "—";
@@ -18,18 +18,25 @@ const formatValue = (value: any, fieldType: string): string => {
  
 const DetailPage = ({ model, id }: Props) => {
   const navigate = useNavigate();
-  const { data: schema, isLoading: schemaLoading } = useSchema(model);
-  const { data: records = [], isLoading: dataLoading } = useData(model);
+  const { data: schema, isLoading: schemaLoading, error: schemaError } = useSchema(model);
+  const { data: item, isLoading: itemLoading, error: itemError } = useItem(model, id);
  
-  const item = records.find((r: any) => r.id === id);
- 
-  if (schemaLoading || dataLoading)
+  if (schemaLoading || itemLoading)
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
  
+  if (schemaError || itemError)
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <p className="text-gray-400 text-sm">
+          {(schemaError as any)?.message ?? (itemError as any)?.message ?? "Failed to load record."}
+        </p>
+      </div>
+    );
+
   if (!schema || !item)
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -47,7 +54,7 @@ const DetailPage = ({ model, id }: Props) => {
         <div className="flex items-start justify-between mb-8">
           <PageHeader
             title="Record Details"
-            subtitle={`Viewing record #${id}`}
+            subtitle={`Viewing record ${id}`}
             onBack={() => navigate(`/${model}`)}
           />
           <button

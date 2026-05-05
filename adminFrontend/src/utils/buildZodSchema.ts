@@ -50,12 +50,13 @@ export const buildZodSchema = (fields: Field[]): z.ZodObject<any> => {
 
       case "relation":
         if (field.multiple) {
-          schema = z.array(z.number()).optional().default([]);
+          schema = field.required
+            ? z.array(z.string()).min(1, `${label(field)} is required`)
+            : z.array(z.string()).optional().default([]);
         } else {
-          schema = z.coerce.number({
-            error: `${label(field)} is required`,
-          });
-          if (!field.required) schema = schema.optional();
+          schema = field.required
+            ? z.string().min(1, `${label(field)} is required`)
+            : z.string().optional();
         }
         break;
 

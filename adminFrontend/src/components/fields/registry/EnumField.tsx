@@ -1,6 +1,7 @@
 import { type FieldProps } from "../../../types/fields";
  
-export const EnumField = ({ field, register, error }: FieldProps) => (
+export const EnumField = ({ field, register, error }: FieldProps) => {
+  return(
   <div className="relative">
     <select
       {...register(field.name)}
@@ -22,5 +23,6 @@ export const EnumField = ({ field, register, error }: FieldProps) => (
       </svg>
     </div>
   </div>
-);
+  )
+};
  

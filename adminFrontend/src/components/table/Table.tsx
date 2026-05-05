@@ -7,7 +7,7 @@ type Props = {
   onSort: (field: string) => void;
   onEdit: (row: any) => void;
   onView?: (row: any) => void;
-  onDelete: (id: number) => void;
+  onDelete: (id: string) => void;
 };
 
 const formatDate = (value: any): string => {
@@ -108,7 +108,7 @@ const Table = ({ schema, data, onSort, onEdit, onDelete, onView }: Props) => {
         ) : (
           data.map((row) => (
             <tr
-              key={row.id ?? JSON.stringify(row)}
+              key={row._id ?? row.id ?? JSON.stringify(row)}
               className="hover:bg-gray-50 transition-colors group"
             >
               {tableFields.map((field) => (
@@ -151,7 +151,7 @@ const Table = ({ schema, data, onSort, onEdit, onDelete, onView }: Props) => {
                     Edit
                   </button>
                   <button
-                    onClick={() => onDelete(row._id)}
+                    onClick={() => onDelete(String(row._id))}
                     className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium
                       rounded-lg border border-red-200 text-red-500 bg-red-50
                       hover:bg-red-100 transition-colors"

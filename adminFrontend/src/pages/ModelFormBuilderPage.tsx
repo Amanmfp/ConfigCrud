@@ -65,6 +65,21 @@ const ModelFormBuilderPage = ({ mode }: Props) => {
     fields.forEach((f, i) => {
       if (!f.name.trim()) errs[`field_${i}_name`] = "Field name required";
       if (!/^[a-zA-Z][a-zA-Z0-9_]*$/.test(f.name)) errs[`field_${i}_name`] = "Invalid field name";
+
+      if (f.type === "relation") {
+        if (!f.relation?.trim()) errs[`field_${i}_relation`] = "Related model is required";
+        if (f.relation?.trim() && f.relation.trim() === name.trim())
+          errs[`field_${i}_relation`] = "Related model cannot be the same as this model";
+      }
+
+      if (f.type === "enum") {
+        if (!f.options || f.options.length === 0)
+          errs[`field_${i}_options`] = "Enum options are required";
+      }
+
+      if (f.type === "array") {
+        if (!f.arrayOf) errs[`field_${i}_arrayOf`] = "Array item type is required";
+      }
     });
     // check duplicate field names
     const names = fields.map((f) => f.name);

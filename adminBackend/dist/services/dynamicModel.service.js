@@ -32,22 +32,32 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getDynamicModel = exports.invalidateModel = exports.buildDynamicModel = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const SchemaDefinition_1 = require("../models/SchemaDefinition");
 const modelCache = new Map();
 const buildMongooseField = (field) => {
+    var _a, _b, _c, _d, _e, _f;
     switch (field.type) {
         case "string": {
             const f = { type: String };
             if (field.required)
-                f.required = [true, `${field.label ?? field.name} is required`];
+                f.required = [true, `${(_a = field.label) !== null && _a !== void 0 ? _a : field.name} is required`];
             if (field.unique)
                 f.unique = true;
             if (field.default !== undefined)
                 f.default = field.default;
-            if (field.validators?.length) {
+            if ((_b = field.validators) === null || _b === void 0 ? void 0 : _b.length) {
                 f.validate = field.validators.map((v) => {
                     if (v.type === "minLength")
                         return { validator: (val) => val.length >= v.value, message: v.message };
@@ -66,7 +76,7 @@ const buildMongooseField = (field) => {
                 f.required = true;
             if (field.default !== undefined)
                 f.default = field.default;
-            if (field.validators?.length) {
+            if ((_c = field.validators) === null || _c === void 0 ? void 0 : _c.length) {
                 f.validate = field.validators.map((v) => {
                     if (v.type === "min")
                         return { validator: (val) => val >= v.value, message: v.message };
@@ -77,9 +87,9 @@ const buildMongooseField = (field) => {
             }
             return f;
         }
-        case "boolean": return { type: Boolean, default: field.default ?? false };
-        case "date": return { type: Date, required: field.required ?? false };
-        case "enum": return { type: String, enum: { values: field.options ?? [], message: "{VALUE} is not valid" }, required: field.required };
+        case "boolean": return { type: Boolean, default: (_d = field.default) !== null && _d !== void 0 ? _d : false };
+        case "date": return { type: Date, required: (_e = field.required) !== null && _e !== void 0 ? _e : false };
+        case "enum": return { type: String, enum: { values: (_f = field.options) !== null && _f !== void 0 ? _f : [], message: "{VALUE} is not valid" }, required: field.required };
         case "relation":
             return field.multiple
                 ? [{ type: mongoose_1.Schema.Types.ObjectId, ref: field.relation }]
@@ -112,12 +122,12 @@ const invalidateModel = (modelName) => {
     }
 };
 exports.invalidateModel = invalidateModel;
-const getDynamicModel = async (modelName) => {
+const getDynamicModel = (modelName) => __awaiter(void 0, void 0, void 0, function* () {
     if (modelCache.has(modelName))
         return modelCache.get(modelName);
-    const schemaDef = await SchemaDefinition_1.SchemaDefinition.findOne({ name: modelName });
+    const schemaDef = yield SchemaDefinition_1.SchemaDefinition.findOne({ name: modelName });
     if (!schemaDef)
         return null;
     return (0, exports.buildDynamicModel)(schemaDef);
-};
+});
 exports.getDynamicModel = getDynamicModel;

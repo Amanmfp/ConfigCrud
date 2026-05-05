@@ -8,7 +8,7 @@ type Props = { model: string };
  
 const CreatePage = ({ model }: Props) => {
   const navigate  = useNavigate();
-  const { data: schema, isLoading } = useSchema(model);
+  const { data: schema, isLoading, error } = useSchema(model);
   const createMutation = useCreateMutation(model);
  
   if (isLoading)
@@ -18,7 +18,19 @@ const CreatePage = ({ model }: Props) => {
       </div>
     );
  
-  if (!schema) return null;
+  if (error)
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <p className="text-gray-400 text-sm">{(error as any)?.message ?? "Failed to load schema."}</p>
+      </div>
+    );
+
+  if (!schema)
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <p className="text-gray-400 text-sm">Schema not available.</p>
+      </div>
+    );
  
   const handleSubmit = (formData: any) => {
     createMutation.mutate(formData, {

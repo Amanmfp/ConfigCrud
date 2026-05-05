@@ -6,7 +6,6 @@ const labelClass =
   "block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5";
  
 const FieldRenderer = ({ field, register, control, error }: FieldProps) => {
-  console.log("field here", field)
   if (field.readOnly) {
     return (
       <div>
@@ -19,7 +18,16 @@ const FieldRenderer = ({ field, register, control, error }: FieldProps) => {
   }
  
   const Component = getFieldComponent(field.type);
-  if (!Component) return null;
+  if (!Component) {
+    return (
+      <div>
+        <label className={labelClass}>{getLabel(field)}</label>
+        <div className="px-3 py-2 text-sm text-gray-600 bg-amber-50 border border-amber-200 rounded-lg">
+          Unsupported field type: <span className="font-semibold">{field.type}</span>
+        </div>
+      </div>
+    );
+  }
  
   return (
     <div>

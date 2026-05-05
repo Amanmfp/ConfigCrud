@@ -1,10 +1,47 @@
+import { useEffect, useMemo, useState } from "react";
 import { Controller } from "react-hook-form";
 import { useData } from "../../hooks/useData";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import { normalizeIds, normalizeId } from "../../utils/normalizeRelationValue";
 import type { FieldProps } from "../../types/fields";
  
 const RelationField = ({ field, control, error }: FieldProps) => {
-  const { data = [], isLoading } = useData(field.relation!);
+  const [query, setQuery] = useState("");
+  const debouncedQuery = useDebouncedValue(query, 250);
+  const [page, setPage] = useState(1);
+  const [options, setOptions] = useState<any[]>([]);
+
+  const params = useMemo(
+    () => ({ page, limit: 50, search: debouncedQuery || undefined }),
+    [page, debouncedQuery]
+  );
+
+  const { data: response, isLoading, isFetching } = useData(field.relation!, params);
+  const total = response?.total ?? 0;
+
+  // When query changes, reset pagination + options
+  useEffect(() => {
+    setPage(1);
+    setOptions([]);
+  }, [debouncedQuery]);
+
+  // Accumulate options across pages (for large datasets)
+  useEffect(() => {
+    if (!response?.data) return;
+    setOptions((prev) => {
+      const merged = [...prev, ...response.data];
+      const seen = new Set<string>();
+      return merged.filter((it: any) => {
+        const key = String(it?._id ?? it?.id ?? "");
+        if (!key) return false;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    });
+  }, [response]);
+
+  const canLoadMore = options.length < total;
  
   if (isLoading)
     return (
@@ -14,6 +51,39 @@ const RelationField = ({ field, control, error }: FieldProps) => {
       </div>
     );
  
+  const renderSearch = () => (
+    <div className="space-y-2">
+      <div className="relative">
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={`Search ${field.relation}...`}
+          className={`w-full px-3 py-2 text-sm text-gray-800 bg-gray-50 border rounded-lg
+            focus:outline-none focus:ring-2 focus:bg-white transition
+            ${error
+              ? "border-red-400 focus:ring-red-300"
+              : "border-gray-200 focus:ring-indigo-400 focus:border-transparent"
+            }`}
+        />
+        {isFetching && (
+          <div className="absolute inset-y-0 right-3 flex items-center">
+            <div className="w-3.5 h-3.5 border-2 border-gray-300 border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
+      </div>
+
+      {canLoadMore && (
+        <button
+          type="button"
+          onClick={() => setPage((p) => p + 1)}
+          className="text-xs font-medium text-indigo-600 hover:text-indigo-700"
+        >
+          Load more ({options.length}/{total})
+        </button>
+      )}
+    </div>
+  );
+
   // ── MANY TO MANY ─────────────────────────────────────────────
   if (field.multiple) {
     return (
@@ -24,7 +94,7 @@ const RelationField = ({ field, control, error }: FieldProps) => {
         render={({ field: rhfField }) => {
           const selectedIds = normalizeIds(rhfField.value);
  
-          const toggle = (id: number) => {
+          const toggle = (id: string) => {
             const next = selectedIds.includes(id)
               ? selectedIds.filter((v) => v !== id)
               : [...selectedIds, id];
@@ -32,23 +102,25 @@ const RelationField = ({ field, control, error }: FieldProps) => {
           };
  
           return (
-            <div className="space-y-1.5">
+            <div className="space-y-2.5">
+              {renderSearch()}
               <div
                 className={`flex flex-wrap gap-2 p-2.5 min-h-[2.75rem] bg-gray-50 border rounded-lg transition
                   ${error ? "border-red-400" : "border-gray-200"}`}
               >
-                {data.length === 0 ? (
+                {options?.length === 0 ? (
                   <span className="text-xs text-gray-400 self-center px-1">
                     No options available
                   </span>
                 ) : (
-                  data.map((item: any) => {
-                    const selected = selectedIds.includes(item.id);
+                  options?.map((item: any) => {
+                    const id = String(item._id ?? item.id);
+                    const selected = selectedIds.includes(id);
                     return (
                       <button
-                        key={item.id}
+                        key={id}
                         type="button"
-                        onClick={() => toggle(item.id)}
+                        onClick={() => toggle(id)}
                         className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium transition-all
                           ${selected
                             ? "bg-indigo-600 text-white shadow-sm"
@@ -60,7 +132,7 @@ const RelationField = ({ field, control, error }: FieldProps) => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                           </svg>
                         )}
-                        {item.name || item.id}
+                        {item.name || item.label || item._id || item.id}
                       </button>
                     );
                   })
@@ -68,7 +140,7 @@ const RelationField = ({ field, control, error }: FieldProps) => {
               </div>
               {selectedIds.length > 0 && (
                 <p className="text-xs text-gray-400 pl-0.5">
-                  {selectedIds.length} of {data.length} selected
+                  {selectedIds.length} selected
                 </p>
               )}
             </div>
@@ -88,32 +160,35 @@ const RelationField = ({ field, control, error }: FieldProps) => {
         const selectedId = normalizeId(rhfField.value);
  
         return (
-          <div className="relative">
-            <select
-              value={selectedId ?? ""}
-              onChange={(e) => {
-                const val = e.target.value;
-                rhfField.onChange(val === "" ? undefined : Number(val)); // ← RHF onChange
-              }}
-              onBlur={rhfField.onBlur}
-              className={`w-full px-3 py-2 text-sm text-gray-800 bg-gray-50 border rounded-lg
-                focus:outline-none focus:ring-2 focus:bg-white transition appearance-none
-                ${error
-                  ? "border-red-400 focus:ring-red-300"
-                  : "border-gray-200 focus:ring-indigo-400 focus:border-transparent"
-                }`}
-            >
-              <option value="">Select {field.label ?? field.name}...</option>
-              {data.map((item: any) => (
-                <option key={item.id} value={item.id}>
-                  {item.name || item.id}
-                </option>
-              ))}
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
+          <div className="space-y-2.5">
+            {renderSearch()}
+            <div className="relative">
+              <select
+                value={selectedId ?? ""}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  rhfField.onChange(val === "" ? undefined : val); // store id string
+                }}
+                onBlur={rhfField.onBlur}
+                className={`w-full px-3 py-2 text-sm text-gray-800 bg-gray-50 border rounded-lg
+                  focus:outline-none focus:ring-2 focus:bg-white transition appearance-none
+                  ${error
+                    ? "border-red-400 focus:ring-red-300"
+                    : "border-gray-200 focus:ring-indigo-400 focus:border-transparent"
+                  }`}
+              >
+                <option value="">Select {field.label ?? field.name}...</option>
+                {options?.map((item: any) => (
+                  <option key={item._id ?? item.id} value={item._id ?? item.id}>
+                    {item.name || item.label || item._id || item.id}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
             </div>
           </div>
         );

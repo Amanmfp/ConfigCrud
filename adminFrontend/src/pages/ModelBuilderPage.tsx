@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAllModels, useDeleteModel } from "../hooks/useModelBuilder";
-import ConfirmDialog from "../components/ui/ConfirmDialog";
 import type { ModelDef } from "../types/modelBuilder";
  
 const ModelBuilderPage = () => {

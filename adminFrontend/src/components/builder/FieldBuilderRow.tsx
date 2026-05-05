@@ -16,6 +16,9 @@ const labelCls = "block text-xs font-semibold text-gray-500 uppercase tracking-w
 const FieldBuilderRow = ({ field, index, fieldTypes, errors, onChange, onRemove }: Props) => {
   const [expanded, setExpanded] = useState(false);
   const nameError = errors[`field_${index}_name`];
+  const relationError = errors[`field_${index}_relation`];
+  const optionsError = errors[`field_${index}_options`];
+  const arrayOfError = errors[`field_${index}_arrayOf`];
  
   const update = (patch: Partial<FieldDef>) => onChange({ ...field, ...patch });
  
@@ -97,8 +100,9 @@ const FieldBuilderRow = ({ field, index, fieldTypes, errors, onChange, onRemove 
                 value={(field.options ?? []).join(", ")}
                 onChange={(e) => update({ options: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })}
                 placeholder="pending, active, inactive"
-                className={inputCls}
+                className={`${inputCls} ${optionsError ? "border-red-400 focus:ring-red-300" : ""}`}
               />
+              {optionsError && <p className="mt-1 text-xs text-red-500">{optionsError}</p>}
             </div>
           )}
  
@@ -111,8 +115,9 @@ const FieldBuilderRow = ({ field, index, fieldTypes, errors, onChange, onRemove 
                   value={field.relation ?? ""}
                   onChange={(e) => update({ relation: e.target.value })}
                   placeholder="users"
-                  className={`${inputCls} font-mono`}
+                  className={`${inputCls} font-mono ${relationError ? "border-red-400 focus:ring-red-300" : ""}`}
                 />
+                {relationError && <p className="mt-1 text-xs text-red-500">{relationError}</p>}
               </div>
               <div className="flex items-center gap-2 mt-6">
                 <button type="button" onClick={() => update({ multiple: !field.multiple })}
@@ -132,11 +137,12 @@ const FieldBuilderRow = ({ field, index, fieldTypes, errors, onChange, onRemove 
             <div>
               <label className={labelCls}>Array Item Type</label>
               <select value={field.arrayOf ?? "string"} onChange={(e) => update({ arrayOf: e.target.value as any })}
-                className={`${inputCls} appearance-none`}>
+                className={`${inputCls} appearance-none ${arrayOfError ? "border-red-400 focus:ring-red-300" : ""}`}>
                 <option value="string">String</option>
                 <option value="number">Number</option>
                 <option value="boolean">Boolean</option>
               </select>
+              {arrayOfError && <p className="mt-1 text-xs text-red-500">{arrayOfError}</p>}
             </div>
           )}
  

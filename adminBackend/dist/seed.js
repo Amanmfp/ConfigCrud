@@ -3,6 +3,15 @@
 // src/seed.ts — seeds your existing hardcoded data into MongoDB
 // Run ONCE: npx ts-node src/seed.ts
 // ================================================================
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -11,8 +20,9 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const SchemaDefinition_1 = require("./models/SchemaDefinition");
 dotenv_1.default.config();
-const seed = async () => {
-    await mongoose_1.default.connect(process.env.MONGO_URI ?? "mongodb://localhost:27017/admin_panel");
+const seed = () => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    yield mongoose_1.default.connect((_a = process.env.MONGO_URI) !== null && _a !== void 0 ? _a : "mongodb://localhost:27017/admin_panel");
     console.log("Connected for seeding...");
     // ── Seed schema definitions ──────────────────────────────────────
     // These replace your schema/users.js, schema/products.js, schema/orders.js
@@ -62,7 +72,7 @@ const seed = async () => {
         },
     ];
     for (const def of schemaDefs) {
-        await SchemaDefinition_1.SchemaDefinition.findOneAndUpdate({ name: def.name }, def, { upsert: true, new: true });
+        yield SchemaDefinition_1.SchemaDefinition.findOneAndUpdate({ name: def.name }, def, { upsert: true, new: true });
         console.log(`✓ Schema seeded: ${def.name}`);
     }
     // ── Seed existing data from your data/ files ──────────────────────
@@ -78,6 +88,6 @@ const seed = async () => {
     // await UserModel!.insertMany(users);
     // console.log(`✓ Seeded ${users.length} users`);
     console.log("\n✅ Seed complete. You can delete data/ and schema/ folders now.");
-    await mongoose_1.default.disconnect();
-};
+    yield mongoose_1.default.disconnect();
+});
 seed().catch(console.error);

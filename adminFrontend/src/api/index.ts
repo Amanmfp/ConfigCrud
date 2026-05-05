@@ -51,6 +51,9 @@ export const fetchSchema  = (model: string) =>
 export const fetchData    = (model: string, params = "") =>
   fetch(`${BASE}/${model}${params}`).then(handleResponse);
  
+export const fetchItem    = (model: string, id: string) =>
+  fetch(`${BASE}/${model}/${id}`).then(handleResponse);
+
 export const createItem   = (model: string, data: any) =>
   fetch(`${BASE}/${model}`, {
     method:  "POST",
