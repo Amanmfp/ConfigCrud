@@ -151,7 +151,7 @@ const Table = ({ schema, data, onSort, onEdit, onDelete, onView }: Props) => {
                     Edit
                   </button>
                   <button
-                    onClick={() => onDelete(row.id)}
+                    onClick={() => onDelete(row._id)}
                     className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium
                       rounded-lg border border-red-200 text-red-500 bg-red-50
                       hover:bg-red-100 transition-colors"

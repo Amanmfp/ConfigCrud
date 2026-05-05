@@ -31,7 +31,7 @@ const ListPage = ({ model }: Props) => {
               {model}
             </h1>
             <p className="text-sm text-gray-500 mt-0.5">
-              {hook.paginatedData.length} records shown
+              {/* {hook.paginatedData.length} records shown */}
             </p>
           </div>
           <button
@@ -48,8 +48,8 @@ const ListPage = ({ model }: Props) => {
  
         <ModelTable
           schema={hook.schema}
-          data={hook.paginatedData}
           search={hook.search}
+          data={hook.data}
           onSearch={hook.handleSearch}
           onSort={hook.handleSort}
           onEdit={(row) => navigate(`/${model}/${row.id}/edit`)}

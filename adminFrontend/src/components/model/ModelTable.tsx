@@ -9,7 +9,7 @@ type Props = {
   onSearch: (value: string) => void;   // handleSearch from hook
   onSort: (field: string) => void;     // handleSort from hook
   onEdit: (row: any) => void;          // handleEdit from hook
-  onDelete: (id: number) => void;      // handleDelete from hook (or override)
+  onDelete: (id: string) => void;      // handleDelete from hook (or override)
   page: number;
   totalPages: number;
   onPageChange: (page: number) => void; // setPage from hook
