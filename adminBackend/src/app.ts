@@ -37,6 +37,18 @@ app.get("/api/health", (req: Request, res: Response) => {
 });
  
  
+// ── DB availability guard ─────────────────────────────────────────
+// If Mongo is down, keep the server up but fail fast for API routes.
+// Health remains accessible and reports degraded.
+app.use("/api", (req: Request, res: Response, next: NextFunction) => {
+  if (req.path === "/health") return next();
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({ error: "Database unavailable. Please try again shortly." });
+  }
+  next();
+});
+
+
 // ── Routes ────────────────────────────────────────────────────────
 // ⚠️ ORDER MATTERS: meta before data
 // so /api/meta/models doesn't match /api/:model
@@ -59,13 +71,22 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
  
 // ── DB + Server start ─────────────────────────────────────────────
 const start = async (): Promise<void> => {
+  const uri = process.env.MONGO_URI ?? "mongodb://localhost:27017/admin_panel";
+ 
+  mongoose.connection.on("connected",    () => console.log("✅ MongoDB connected"));
+  mongoose.connection.on("disconnected", () => console.log("⚠️  MongoDB disconnected"));
+  mongoose.connection.on("error",  (err) => console.error("❌ MongoDB error:", err.message));
+ 
+  // Start HTTP server regardless of DB state
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
+    console.log(`📋 Health:  GET http://localhost:${PORT}/api/health`);
+    console.log(`📦 Models:  GET http://localhost:${PORT}/api/models`);
+    console.log(`🔧 Builder: GET http://localhost:${PORT}/api/meta/models`);
+  });
+ 
+  // Connect Mongo in background (server stays up even if this fails)
   try {
-    const uri = process.env.MONGO_URI ?? "mongodb://localhost:27017/admin_panel";
- 
-    mongoose.connection.on("connected",    () => console.log("✅ MongoDB connected"));
-    mongoose.connection.on("disconnected", () => console.log("⚠️  MongoDB disconnected"));
-    mongoose.connection.on("error",  (err) => console.error("❌ MongoDB error:", err.message));
- 
     await mongoose.connect(uri);
  
     // Pre-build all dynamic models so first request has no cold start
@@ -77,17 +98,8 @@ const start = async (): Promise<void> => {
       buildDynamicModel(schema);
       console.log(`  ✓ Loaded model: ${schema.name}`);
     }
- 
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on http://localhost:${PORT}`);
-      console.log(`📋 Health:  GET http://localhost:${PORT}/api/health`);
-      console.log(`📦 Models:  GET http://localhost:${PORT}/api/models`);
-      console.log(`🔧 Builder: GET http://localhost:${PORT}/api/meta/models`);
-    });
- 
   } catch (err: any) {
-    console.error("❌ Failed to start:", err.message);
-    process.exit(1);
+    console.error("❌ Mongo connection failed (server still running):", err.message);
   }
 };
  

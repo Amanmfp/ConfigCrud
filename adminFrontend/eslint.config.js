@@ -18,5 +18,16 @@ export default defineConfig([
     languageOptions: {
       globals: globals.browser,
     },
+    rules: {
+      // This is a schema-driven app with dynamic records/fields.
+      // We keep types where they add safety, but allow `any` at integration boundaries.
+      '@typescript-eslint/no-explicit-any': 'off',
+
+      // React Hook lint rule is too strict for dynamic field registries.
+      'react-hooks/static-components': 'off',
+
+      // Some pages legitimately hydrate local state from async fetches.
+      'react-hooks/set-state-in-effect': 'off',
+    },
   },
 ])
