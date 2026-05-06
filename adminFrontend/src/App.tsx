@@ -1,75 +1,126 @@
-import { Routes, Route, Navigate, useParams } from "react-router-dom";
-import { Toaster } from "sonner";
+// App.tsx — React Router v7
+ 
+import { lazy }                 from "react";
+import {
+  createBrowserRouter,
+  RouterProvider,
+  Navigate,
+  useParams,
+}                           from "react-router-dom";
+import { Toaster }          from "sonner";
 import AdminLayout          from "./components/layout/AdminLayout";
-import ListPage             from "./pages/model/ListPage";
-import CreatePage           from "./pages/model/CreatePage";
-import EditPage             from "./pages/model/EditPage";
-import DetailPage           from "./pages/model/DetailPage";
-import ModelBuilderPage     from "./pages/ModelBuilderPage";
-import ModelFormBuilderPage from "./pages/ModelFormBuilderPage";
-import { useModels }        from "./hooks/useModels";
-
-const ListPageWrapper = () => {
+ 
+// ── Lazy loaded pages ─────────────────────────────────────────────
+const ListPage             = lazy(() => import("./pages/model/ListPage"));
+const CreatePage           = lazy(() => import("./pages/model/CreatePage"));
+const EditPage             = lazy(() => import("./pages/model/EditPage"));
+const DetailPage           = lazy(() => import("./pages/model/DetailPage"));
+const ModelBuilderPage     = lazy(() => import("./pages/ModelBuilderPage"));
+const ModelFormBuilderPage = lazy(() => import("./pages/ModelFormBuilderPage"));
+ 
+const AppError = ({ message }: { message: string }) => (
+  <div className="flex items-center justify-center min-h-screen bg-gray-50">
+    <div className="text-center space-y-3">
+      <p className="text-red-500 font-medium">Failed to load admin panel</p>
+      <p className="text-sm text-gray-400">{message}</p>
+      <button
+        onClick={() => window.location.reload()}
+        className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+      >
+        Retry
+      </button>
+    </div>
+  </div>
+);
+ 
+// ── Root layout ───────────────────────────────────────────────────
+// AdminLayout handles <Outlet /> and <Suspense> internally
+// No wrapper needed — use it directly as the route element
+const RootLayout = AdminLayout;
+ 
+// ── Page components ───────────────────────────────────────────────
+const ModelListPage = () => {
   const { model } = useParams<{ model: string }>();
-  if (!model) return null;
-  return <ListPage model={model} />;
+  return model ? <ListPage model={model} /> : null;
 };
-
-const CreatePageWrapper = () => {
+ 
+const ModelCreatePage = () => {
   const { model } = useParams<{ model: string }>();
-  if (!model) return null;
-  return <CreatePage model={model} />;
+  return model ? <CreatePage model={model} /> : null;
 };
-
-const EditPageWrapper = () => {
+ 
+const ModelEditPage = () => {
   const { model, id } = useParams<{ model: string; id: string }>();
-  if (!model || !id) return null;
-  return <EditPage model={model} id={id} />;
+  return model && id ? <EditPage model={model} id={id} /> : null;
 };
-
-const DetailPageWrapper = () => {
+ 
+const ModelDetailPage = () => {
   const { model, id } = useParams<{ model: string; id: string }>();
-  if (!model || !id) return null;
-  return <DetailPage model={model} id={id} />;
+  return model && id ? <DetailPage model={model} id={id} /> : null;
 };
-
-const AppRoutes = () => {
-  const { data: models = [], isLoading } = useModels();
-
-  if (isLoading)
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-gray-500">Loading admin panel...</p>
-        </div>
-      </div>
-    );
-
-  const firstModel = models[0]?.name ?? "builder";
-
-  return (
-    <AdminLayout>
-      <Routes>
-        <Route path="/" element={<Navigate to={`/${firstModel}`} replace />} />
-        <Route path="/builder"                 element={<ModelBuilderPage />} />
-        <Route path="/builder/create"          element={<ModelFormBuilderPage mode="create" />} />
-        <Route path="/builder/:modelName/edit" element={<ModelFormBuilderPage mode="edit" />} />
-        <Route path="/:model"          element={<ListPageWrapper />} />
-        <Route path="/:model/create"   element={<CreatePageWrapper />} />
-        <Route path="/:model/:id"      element={<DetailPageWrapper />} />
-        <Route path="/:model/:id/edit" element={<EditPageWrapper />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </AdminLayout>
-  );
-};
-
+ 
+// ── Router ────────────────────────────────────────────────────────
+const router = createBrowserRouter([
+  {
+    element: <RootLayout />,
+    // Top-level error boundary — catches loader/render errors
+    errorElement: <AppError message="Something went wrong. Please refresh." />,
+    children: [
+ 
+      // Index → always goes to builder, no API call needed
+      {
+        index: true,
+        element: <Navigate to="/builder" replace />,  // ← static, no useModels()
+      },
+ 
+      // ── Builder routes ────────────────────────────────────────
+      {
+        path: "builder",
+        element: <ModelBuilderPage />,
+      },
+      {
+        path: "builder/create",
+        element: <ModelFormBuilderPage mode="create" />,
+      },
+      {
+        path: "builder/:modelName/edit",
+        element: <ModelFormBuilderPage mode="edit" />,
+      },
+ 
+      // ── Dynamic model routes ──────────────────────────────────
+      {
+        path: ":model",
+        element: <ModelListPage />,
+      },
+      {
+        path: ":model/create",
+        element: <ModelCreatePage />,
+      },
+      {
+        path: ":model/:id/edit",  // edit before :id to avoid conflict
+        element: <ModelEditPage />,
+      },
+      {
+        path: ":model/:id",
+        element: <ModelDetailPage />,
+      },
+ 
+      // ── 404 ───────────────────────────────────────────────────
+      {
+        path: "*",
+        element: <Navigate to="/builder" replace />,
+      },
+    ],
+  },
+]);
+ 
+// ── Root App ──────────────────────────────────────────────────────
 const App = () => (
   <>
-    <AppRoutes />
+    <RouterProvider router={router} />
     <Toaster position="bottom-right" richColors closeButton duration={4000} />
   </>
 );
-
+ 
 export default App;
+ 

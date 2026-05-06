@@ -1,176 +1,222 @@
-import type { JSX } from "react/jsx-runtime";
-import type { ModelMeta } from "../../hooks/useModels"; // ← dynamic type
+// components/layout/Sidebar.tsx — senior level optimised
 
+import { memo, useCallback }       from "react";
+import type { ModelMeta }          from "../../hooks/useModels";
+
+// ── Constants ─────────────────────────────────────────────────────
+const BUILDER_KEY   = "__builder__" as const;
+const SKELETON_ROWS = 4;
+
+// ── Types ─────────────────────────────────────────────────────────
 type Props = {
-  models: ModelMeta[];    // ← no longer readonly RegisteredModel[]
-  activeModel: string;
-  onSelect: (model: string) => void;
-  isCollapsed: boolean;
+  models:           ModelMeta[];
+  activeModel:      string;
+  onSelect:         (model: string) => void;
+  isCollapsed:      boolean;
   onToggleCollapse: () => void;
-  isLoading?: boolean;        // ← show skeleton while fetching
+  isLoading?:       boolean;
 };
 
-// Icon map — keyed by icon string from backend
-// Backend sends { icon: "users" | "package" | "shopping" | ... }
-// Any unknown icon falls back to DefaultIcon
-const icons: Record<string, (active: boolean) => JSX.Element> = {
-  users: (active) => (
-    <svg className={`w-5 h-5 ${active ? "text-indigo-600" : "text-gray-400 group-hover:text-gray-600"}`}
-      fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75}
-        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-    </svg>
-  ),
-  package: (active) => (
-    <svg className={`w-5 h-5 ${active ? "text-indigo-600" : "text-gray-400 group-hover:text-gray-600"}`}
-      fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75}
-        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-    </svg>
-  ),
-  shopping: (active) => (
-    <svg className={`w-5 h-5 ${active ? "text-indigo-600" : "text-gray-400 group-hover:text-gray-600"}`}
-      fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75}
-        d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-    </svg>
-  ),
-};
+type IconProps = { active: boolean };
 
-// Fallback icon for any model without a matching icon key
-const DefaultIcon = ({ active }: { active: boolean }) => (
-  <svg className={`w-5 h-5 ${active ? "text-indigo-600" : "text-gray-400 group-hover:text-gray-600"}`}
-    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+// ── Icon components ───────────────────────────────────────────────
+// Defined as proper React components, not functions returning JSX.
+// This lets React track them correctly in reconciliation.
+const iconClass = (active: boolean) =>
+  `w-5 h-5 ${active ? "text-indigo-600" : "text-gray-400 group-hover:text-gray-600"}`;
+
+const UsersIcon   = ({ active }: IconProps) => (
+  <svg className={iconClass(active)} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75}
+      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+  </svg>
+);
+
+const PackageIcon = ({ active }: IconProps) => (
+  <svg className={iconClass(active)} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75}
+      d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+  </svg>
+);
+
+const ShoppingIcon = ({ active }: IconProps) => (
+  <svg className={iconClass(active)} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75}
+      d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+  </svg>
+);
+
+const DefaultIcon  = ({ active }: IconProps) => (
+  <svg className={iconClass(active)} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75}
       d="M4 6h16M4 10h16M4 14h16M4 18h7" />
   </svg>
 );
 
-const Sidebar = ({
+// ── Icon registry ─────────────────────────────────────────────────
+// Maps icon key → React component (not a render function)
+const ICON_MAP: Record<string, React.ComponentType<IconProps>> = {
+  users:    UsersIcon,
+  package:  PackageIcon,
+  shopping: ShoppingIcon,
+};
+
+const getIcon = (iconKey?: string): React.ComponentType<IconProps> =>
+  ICON_MAP[iconKey ?? ""] ?? DefaultIcon;
+
+// ── Active indicator ──────────────────────────────────────────────
+const ActiveBar = () => (
+  <span className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-l-full bg-indigo-600" />
+);
+
+// ── Skeleton loader ───────────────────────────────────────────────
+// Extracted — no longer creates Array.from on every render
+const SkeletonNav = ({ isCollapsed }: { isCollapsed: boolean }) => (
+  <>
+    {Array.from({ length: SKELETON_ROWS }, (_, i) => (
+      <div
+        key={i}
+        className={`h-10 rounded-lg bg-gray-100 animate-pulse mx-1 ${
+          isCollapsed ? "w-10" : "w-full"
+        }`}
+      />
+    ))}
+  </>
+);
+
+// ── NavButton ─────────────────────────────────────────────────────
+// Extracted sub-component so memo works at the item level.
+// Only re-renders when its own active state or label changes.
+type NavButtonProps = {
+  name:        string;
+  label:       string;
+  icon?:       string;
+  active:      boolean;
+  isCollapsed: boolean;
+  onClick:     () => void;
+};
+
+const NavButton = memo(({
+  label, icon, active, isCollapsed, onClick,
+}: NavButtonProps) => {
+  const Icon = getIcon(icon);
+  return (
+    <button
+      onClick={onClick}
+      title={isCollapsed ? label : undefined}
+      className={`group relative w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
+        text-sm font-medium transition-all duration-150 text-left
+        ${active
+          ? "bg-indigo-50 text-indigo-700"
+          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+        }`}
+    >
+      <span className="shrink-0"><Icon active={active} /></span>
+      {!isCollapsed && <span className="truncate">{label}</span>}
+      {active && <ActiveBar />}
+    </button>
+  );
+});
+NavButton.displayName = "NavButton";
+
+// ── Sidebar ───────────────────────────────────────────────────────
+// memo: only re-renders when props actually change
+const Sidebar = memo(({
   models,
   activeModel,
   onSelect,
   isCollapsed,
   onToggleCollapse,
   isLoading,
-}: Props) => (
-  <aside
-    className={`relative h-screen bg-white border-r border-gray-200 flex flex-col
-      transition-all duration-300 ease-in-out
-      ${isCollapsed ? "w-16" : "w-60"}`}
-  >
-    {/* Logo */}
-    <div className={`h-16 flex items-center border-b border-gray-100 shrink-0
-      ${isCollapsed ? "justify-center px-0" : "px-5 gap-3"}`}
-    >
-      <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shrink-0">
-        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-            d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-        </svg>
-      </div>
-      {!isCollapsed && (
-        <span className="text-sm font-bold text-gray-900 tracking-tight">Admin Panel</span>
-      )}
-    </div>
+}: Props) => {
 
-    {/* Nav items */}
-    <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1">
-      <div className="border-b border-gray-100 pb-2 mb-2">
+  // Stable handler for builder — no inline arrow in JSX
+  const handleBuilderClick = useCallback(
+    () => onSelect(BUILDER_KEY),
+    [onSelect]
+  );
+
+  return (
+    <aside
+      className={`relative h-screen bg-white border-r border-gray-200 flex flex-col
+        transition-all duration-300 ease-in-out
+        ${isCollapsed ? "w-16" : "w-60"}`}
+    >
+      {/* Logo */}
+      <div className={`h-16 flex items-center border-b border-gray-100 shrink-0
+        ${isCollapsed ? "justify-center" : "px-5 gap-3"}`}
+      >
+        <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shrink-0">
+          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+          </svg>
+        </div>
+        {!isCollapsed && (
+          <span className="text-sm font-bold text-gray-900 tracking-tight">Admin Panel</span>
+        )}
+      </div>
+
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1">
+
+        {/* Builder — always pinned at top */}
+        <div className="border-b border-gray-100 pb-2 mb-2">
+          <NavButton
+            name="builder"
+            label="Model Builder"
+            icon="builder"
+            active={activeModel === "builder"}
+            isCollapsed={isCollapsed}
+            onClick={handleBuilderClick}
+          />
+        </div>
+
+        {!isCollapsed && (
+          <p className="px-3 pb-1 text-[10px] font-semibold text-gray-400 uppercase tracking-widest">
+            Models
+          </p>
+        )}
+
+        {/* Model list or skeleton */}
+        {isLoading ? (
+          <SkeletonNav isCollapsed={isCollapsed} />
+        ) : (
+          models.map((model) => (
+            <NavButton
+              key={model.name}
+              name={model.name}
+              label={model.label}
+              icon={model.icon}
+              active={activeModel === model.name}
+              isCollapsed={isCollapsed}
+              // useCallback per-item via stable onSelect from AdminLayout
+              onClick={() => onSelect(model.name)}
+            />
+          ))
+        )}
+      </nav>
+
+      {/* Collapse toggle */}
+      <div className="shrink-0 border-t border-gray-100 p-2">
         <button
-          onClick={() => onSelect("__builder__")}
-          title={isCollapsed ? "Model Builder" : undefined}
-          className={`group relative w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
-                text-sm font-medium transition-all duration-150 text-left
-                ${activeModel === "builder"
-              ? "bg-indigo-50 text-indigo-700"
-              : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-            }`}
+          onClick={onToggleCollapse}
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg
+            text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition"
         >
           <svg
-            className={`w-5 h-5 shrink-0 ${activeModel === "builder" ? "text-indigo-600" : "text-gray-400 group-hover:text-gray-600"}`}
+            className={`w-4 h-4 transition-transform duration-300 ${isCollapsed ? "rotate-180" : ""}`}
             fill="none" stroke="currentColor" viewBox="0 0 24 24"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75}
-              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75}
-              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
           </svg>
-          {!isCollapsed && <span>Model Builder</span>}
-          {activeModel === "builder" && (
-            <span className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-l-full bg-indigo-600" />
-          )}
+          {!isCollapsed && <span>Collapse</span>}
         </button>
       </div>
-      {!isCollapsed && (
-        <p className="px-3 mb-2 text-[10px] font-semibold text-gray-400 uppercase tracking-widest">
-          Models
-        </p>
-      )}
+    </aside>
+  );
+});
 
-      {/* Loading skeleton — shown while useModels() fetches */}
-      {isLoading ? (
-        Array.from({ length: 4 }).map((_, i) => (
-          <div
-            key={i}
-            className={`h-10 rounded-lg bg-gray-100 animate-pulse mx-1
-              ${isCollapsed ? "w-10" : "w-full"}`}
-          />
-        ))
-      ) : (
-        <>
-          {/* Model Builder link — always at bottom of model list */}
-          {/* Dynamic model items from backend */}
-          {models.map((model) => {
-            const active = activeModel === model.name;
-            const IconFn = icons[model.icon ?? ""] ?? ((a: boolean) => <DefaultIcon active={a} />);
-
-            return (
-              <button
-                key={model.name}
-                onClick={() => onSelect(model.name)}
-                title={isCollapsed ? model.label : undefined}
-                className={`group relative w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
-                  text-sm font-medium transition-all duration-150 text-left
-                  ${active
-                    ? "bg-indigo-50 text-indigo-700"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                  }`}
-              >
-                <span className="shrink-0">{IconFn(active)}</span>
-                {!isCollapsed && (
-                  <span className="truncate">{model.label}</span>
-                )}
-                {active && (
-                  <span className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-l-full bg-indigo-600" />
-                )}
-              </button>
-            );
-          })}
-
-
-        </>
-      )}
-    </nav>
-
-    {/* Collapse toggle */}
-    <div className="shrink-0 border-t border-gray-100 p-2">
-      <button
-        onClick={onToggleCollapse}
-        className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg
-          text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition"
-      >
-        <svg
-          className={`w-4 h-4 transition-transform duration-300 ${isCollapsed ? "rotate-180" : ""}`}
-          fill="none" stroke="currentColor" viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-            d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-        </svg>
-        {!isCollapsed && <span>Collapse</span>}
-      </button>
-    </div>
-  </aside>
-);
-
+Sidebar.displayName = "Sidebar";
 export default Sidebar;
