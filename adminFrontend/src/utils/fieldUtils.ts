@@ -1,6 +1,5 @@
 import type { Field } from "../types/schema";
- 
-// "firstName" → "First Name", "created_at" → "Created At"
+
 export const toLabel = (name: string): string =>
   name
     .replace(/_/g, " ")

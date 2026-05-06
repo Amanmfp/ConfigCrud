@@ -1,13 +1,9 @@
-// components/layout/Sidebar.tsx — senior level optimised
-
 import { memo, useCallback }       from "react";
 import type { ModelMeta }          from "../../hooks/useModels";
 
-// ── Constants ─────────────────────────────────────────────────────
 const BUILDER_KEY   = "__builder__" as const;
 const SKELETON_ROWS = 4;
 
-// ── Types ─────────────────────────────────────────────────────────
 type Props = {
   models:           ModelMeta[];
   activeModel:      string;
@@ -19,9 +15,6 @@ type Props = {
 
 type IconProps = { active: boolean };
 
-// ── Icon components ───────────────────────────────────────────────
-// Defined as proper React components, not functions returning JSX.
-// This lets React track them correctly in reconciliation.
 const iconClass = (active: boolean) =>
   `w-5 h-5 ${active ? "text-indigo-600" : "text-gray-400 group-hover:text-gray-600"}`;
 
@@ -53,8 +46,7 @@ const DefaultIcon  = ({ active }: IconProps) => (
   </svg>
 );
 
-// ── Icon registry ─────────────────────────────────────────────────
-// Maps icon key → React component (not a render function)
+// Maps icon key 
 const ICON_MAP: Record<string, React.ComponentType<IconProps>> = {
   users:    UsersIcon,
   package:  PackageIcon,
@@ -64,13 +56,11 @@ const ICON_MAP: Record<string, React.ComponentType<IconProps>> = {
 const getIcon = (iconKey?: string): React.ComponentType<IconProps> =>
   ICON_MAP[iconKey ?? ""] ?? DefaultIcon;
 
-// ── Active indicator ──────────────────────────────────────────────
 const ActiveBar = () => (
   <span className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-l-full bg-indigo-600" />
 );
 
 // ── Skeleton loader ───────────────────────────────────────────────
-// Extracted — no longer creates Array.from on every render
 const SkeletonNav = ({ isCollapsed }: { isCollapsed: boolean }) => (
   <>
     {Array.from({ length: SKELETON_ROWS }, (_, i) => (
@@ -85,8 +75,6 @@ const SkeletonNav = ({ isCollapsed }: { isCollapsed: boolean }) => (
 );
 
 // ── NavButton ─────────────────────────────────────────────────────
-// Extracted sub-component so memo works at the item level.
-// Only re-renders when its own active state or label changes.
 type NavButtonProps = {
   name:        string;
   label:       string;
@@ -117,10 +105,8 @@ const NavButton = memo(({
     </button>
   );
 });
-NavButton.displayName = "NavButton";
 
 // ── Sidebar ───────────────────────────────────────────────────────
-// memo: only re-renders when props actually change
 const Sidebar = memo(({
   models,
   activeModel,
@@ -130,7 +116,6 @@ const Sidebar = memo(({
   isLoading,
 }: Props) => {
 
-  // Stable handler for builder — no inline arrow in JSX
   const handleBuilderClick = useCallback(
     () => onSelect(BUILDER_KEY),
     [onSelect]
@@ -159,8 +144,6 @@ const Sidebar = memo(({
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1">
-
-        {/* Builder — always pinned at top */}
         <div className="border-b border-gray-100 pb-2 mb-2">
           <NavButton
             name="builder"
@@ -190,7 +173,6 @@ const Sidebar = memo(({
               icon={model.icon}
               active={activeModel === model.name}
               isCollapsed={isCollapsed}
-              // useCallback per-item via stable onSelect from AdminLayout
               onClick={() => onSelect(model.name)}
             />
           ))
@@ -218,5 +200,4 @@ const Sidebar = memo(({
   );
 });
 
-Sidebar.displayName = "Sidebar";
 export default Sidebar;

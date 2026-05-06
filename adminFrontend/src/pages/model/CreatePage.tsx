@@ -34,7 +34,7 @@ const CreatePage = ({ model }: Props) => {
  
   const handleSubmit = (formData: any) => {
     createMutation.mutate(formData, {
-      onSuccess: () => navigate(`/${model}`), // ← back to list on success
+      onSuccess: () => navigate(`/${model}`), 
     });
   };
  

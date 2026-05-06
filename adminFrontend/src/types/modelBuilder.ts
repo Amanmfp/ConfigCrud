@@ -16,12 +16,12 @@ export type FieldDef = {
   required:     boolean;
   unique?:      boolean;
   default?:     any;
-  options?:     string[];       // for enum
-  relation?:    string;         // for relation
-  multiple?:    boolean;        // for relation many-to-many
+  options?:     string[];    
+  relation?:    string;       
+  multiple?:    boolean;      
   arrayOf?:     "string" | "number" | "boolean";
   validators?:  FieldValidator[];
-  // UI metadata
+
   label?:       string;
   placeholder?: string;
   helpText?:    string;

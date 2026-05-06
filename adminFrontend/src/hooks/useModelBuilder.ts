@@ -23,7 +23,7 @@ export const useCreateModel = () => {
     mutationFn: metaApi.createModelDef,
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["meta", "models"] });
-      queryClient.invalidateQueries({ queryKey: ["models"] }); // sidebar
+      queryClient.invalidateQueries({ queryKey: ["models"] }); 
       toast.success("Model created", { description: `"${data.label}" is now available.` });
     },
     onError: (err: any) => toast.error("Create failed", { description: err.message }),

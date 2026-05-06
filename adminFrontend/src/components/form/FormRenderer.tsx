@@ -14,7 +14,6 @@ type Props = {
 };
  
 // Build empty default values from schema fields
-// Ensures reset() always puts fields back to a clean empty state
 const buildEmptyValues = (schema: Schema): Record<string, any> => {
   const empty: Record<string, any> = {};
   for (const field of schema.fields) {
@@ -50,7 +49,7 @@ const FormRenderer = ({ schema, onSubmit, initialData, registerReset }: Props) =
   useEffect(() => {
     registerReset?.(() => reset(emptyValues)); // ← reset to explicit empty
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [registerReset]); // reset and emptyValues are stable, registerReset is useCallback
+  }, [registerReset]); 
  
   // When switching between edit items, fill form with that item's data
   useEffect(() => {

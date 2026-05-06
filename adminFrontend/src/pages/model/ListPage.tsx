@@ -5,8 +5,7 @@ import { useModelPage }       from "../../hooks/useModalPage";
 import ModelTable             from "../../components/model/ModelTable";
  
 type Props = { model: string };
- 
-// ── Loading state ─────────────────────────────────────────────────
+
 const LoadingState = () => (
   <div className="flex items-center justify-center min-h-[60vh]">
     <div className="flex flex-col items-center gap-3">
@@ -16,8 +15,7 @@ const LoadingState = () => (
   </div>
 );
  
-// ── Error state ───────────────────────────────────────────────────
-// Uses React Query's refetch instead of full page reload
+
 const ErrorState = ({ message, onRetry }: { message: string; onRetry: () => void }) => (
   <div className="px-4 py-10 sm:px-6 lg:px-10">
     <div className="max-w-3xl mx-auto bg-white border border-red-100 rounded-2xl p-6">
@@ -33,21 +31,18 @@ const ErrorState = ({ message, onRetry }: { message: string; onRetry: () => void
     </div>
   </div>
 );
- 
-// ── Empty schema state ────────────────────────────────────────────
+
 const EmptyState = () => (
   <div className="flex items-center justify-center min-h-[60vh]">
     <p className="text-gray-400 text-sm">Schema not available.</p>
   </div>
 );
  
-// ── ListPage ──────────────────────────────────────────────────────
 const ListPage = memo(({ model }: Props) => {
   const navigate     = useNavigate();
   const queryClient  = useQueryClient();
   const hook         = useModelPage(model);
  
-  // Stable handlers — no inline arrows in JSX
   const handleCreate = useCallback(
     () => navigate(`/${model}/create`),
     [navigate, model]
@@ -62,9 +57,6 @@ const ListPage = memo(({ model }: Props) => {
     (row: any) => navigate(`/${model}/${row._id}`),
     [navigate, model]
   );
- 
-  // React Query retry — invalidates cache and refetches
-  // Better than window.location.reload() which loses all state
   const handleRetry = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["schema", model] });
     queryClient.invalidateQueries({ queryKey: ["data",   model] });
@@ -126,5 +118,4 @@ const ListPage = memo(({ model }: Props) => {
   );
 });
  
-ListPage.displayName = "ListPage";
 export default ListPage;

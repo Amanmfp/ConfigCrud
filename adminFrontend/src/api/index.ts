@@ -1,40 +1,53 @@
-
+import axios from "axios";
 
 // const BASE = import.meta.env.VITE_API_URL ?? "http://localhost:3000/api";
-const BASE = 'https://configcrud.onrender.com/api'
- 
-const handleResponse = async (res: Response) => {
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error ?? "Request failed");
-  return data;
-};
- 
-export const fetchModels  = () =>
-  fetch(`${BASE}/models`).then(handleResponse);
- 
-export const fetchSchema  = (model: string) =>
-  fetch(`${BASE}/schema/${model}`).then(handleResponse);
- 
-export const fetchData    = (model: string, params = "") =>
-  fetch(`${BASE}/${model}${params}`).then(handleResponse);
- 
-export const fetchItem    = (model: string, id: string) =>
-  fetch(`${BASE}/${model}/${id}`).then(handleResponse);
+const BASE = "https://configcrud.onrender.com/api";
 
-export const createItem   = (model: string, data: any) =>
-  fetch(`${BASE}/${model}`, {
-    method:  "POST",
-    headers: { "Content-Type": "application/json" },
-    body:    JSON.stringify(data),
-  }).then(handleResponse);
- 
-export const updateItem   = (model: string, id: string, data: any) =>
-  // ← id is string (MongoDB _id), not number
-  fetch(`${BASE}/${model}/${id}`, {
-    method:  "PUT",
-    headers: { "Content-Type": "application/json" },
-    body:    JSON.stringify(data),
-  }).then(handleResponse);
- 
-export const deleteItem   = (model: string, id: string) =>
-  fetch(`${BASE}/${model}/${id}`, { method: "DELETE" }).then(handleResponse);
+const api = axios.create({
+  baseURL: BASE,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+// Optional: response interceptor (centralized error handling)
+api.interceptors.response.use(
+  (res) => res.data,
+  (err) => {
+    const message =
+      err.response?.data?.error || err.message || "Request failed";
+    return Promise.reject(new Error(message));
+  }
+);
+
+// APIs
+export const fetchModels = () => api.get("/models");
+
+export const fetchSchema = (model: string) =>
+  api.get(`/schema/${model}`);
+
+export const fetchData = (
+  model: string,
+  params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    sortBy?: string;
+    order?: string;
+  }
+): Promise<any> =>
+  api.get(`/${model}`, {
+    params, 
+  });
+
+export const fetchItem = (model: string, id: string) =>
+  api.get(`/${model}/${id}`);
+
+export const createItem = (model: string, data: any) =>
+  api.post(`/${model}`, data);
+
+export const updateItem = (model: string, id: string, data: any) =>
+  api.put(`/${model}/${id}`, data);
+
+export const deleteItem = (model: string, id: string) =>
+  api.delete(`/${model}/${id}`);

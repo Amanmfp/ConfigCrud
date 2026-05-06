@@ -16,21 +16,10 @@ type Props = {
   onPageChange: (page: number) => void;
 };
  
-// ── SearchInput ───────────────────────────────────────────────────
-// Isolated component with its OWN local state.
-// Syncs UP to parent via onSearch but doesn't re-render from parent.
-// This is the fix for the focus loss bug:
-//
-// BUG: parent search state → re-render ModelTable → input remounts → focus lost
-// FIX: input owns its own value, parent only receives updates via onChange
-//      useEffect syncs parent → local only when model changes (reset case)
-//
 const SearchInput = memo(({ value, onChange }: { value: string; onChange: (v: string) => void }) => {
   const [localValue, setLocalValue] = useLocalState(value);
   const inputRef = useRef<HTMLInputElement>(null);
  
-  // Only sync from parent when value resets to "" (model switch / clear)
-  // NOT on every keystroke — that's what caused the focus loss
   useEffect(() => {
     if (value === "") setLocalValue("");
   }, [value]);
@@ -38,7 +27,7 @@ const SearchInput = memo(({ value, onChange }: { value: string; onChange: (v: st
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setLocalValue(e.target.value);
-      onChange(e.target.value);     // notify parent
+      onChange(e.target.value);    
     },
     [onChange]
   );
@@ -65,15 +54,11 @@ const SearchInput = memo(({ value, onChange }: { value: string; onChange: (v: st
     </div>
   );
 });
-SearchInput.displayName = "SearchInput";
  
-// Simple local state hook to avoid useState import noise in the component
 function useLocalState(initial: string) {
-  return useState(initial);  // just re-export for clarity
+  return useState(initial);  
 }
-// (import useState at the top of the file)
  
-// ── Pagination ────────────────────────────────────────────────────
 const Pagination = memo(({
   page, totalPages, onPageChange,
 }: { page: number; totalPages: number; onPageChange: (p: number) => void }) => {
@@ -109,9 +94,8 @@ const Pagination = memo(({
     </div>
   );
 });
-Pagination.displayName = "Pagination";
  
-// ── ModelTable ────────────────────────────────────────────────────
+
 const ModelTable = memo(({
   schema, data, search, onSearch,
   onSort, onEdit, onDelete, onView,
@@ -119,7 +103,7 @@ const ModelTable = memo(({
 }: Props) => (
   <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
  
-    {/* Search — isolated component, maintains own focus */}
+    {/* Search  */}
     <div className="px-5 py-4 border-b border-gray-100">
       <SearchInput value={search} onChange={onSearch} />
     </div>
@@ -141,5 +125,4 @@ const ModelTable = memo(({
   </div>
 ));
  
-ModelTable.displayName = "ModelTable";
 export default ModelTable;

@@ -15,8 +15,6 @@ export const normalizeIds = (value: any): string[] => {
     .filter((v): v is string => v !== null && v.length > 0);
 };
  
-// Normalize ANY many-to-one value shape → always string | undefined
-// Handles: {_id:"..."}, {id:"..."}, "id", null, undefined, ""
 export const normalizeId = (value: any): string | undefined => {
   if (value === null || value === undefined || value === "") return undefined;
   if (typeof value === "number") return String(value);

@@ -8,8 +8,6 @@ import {
 import { Toaster } from "sonner";
 import AdminLayout from "./components/layout/AdminLayout";
 import NotFound from "./pages/NotFound";
-
-// ── Lazy loaded pages ─────────────────────────────────────────────
 const ListPage = lazy(() => import("./pages/model/ListPage"));
 const CreatePage = lazy(() => import("./pages/model/CreatePage"));
 const EditPage = lazy(() => import("./pages/model/EditPage"));
@@ -34,7 +32,6 @@ const AppError = ({ message }: { message: string }) => (
 
 const RootLayout = AdminLayout;
 
-// ── Page components ───────────────────────────────────────────────
 const ModelListPage = () => {
   const { model } = useParams<{ model: string }>();
   return model ? <ListPage model={model} /> : null;
@@ -55,7 +52,6 @@ const ModelDetailPage = () => {
   return model && id ? <DetailPage model={model} id={id} /> : null;
 };
 
-// ── Router ────────────────────────────────────────────────────────
 const router = createBrowserRouter([
   {
     element: <RootLayout />,
@@ -65,8 +61,6 @@ const router = createBrowserRouter([
         index: true,
         element: <Navigate to="/builder" replace />,
       },
-
-      // ── Builder routes ────────────────────────────────────────
       {
         path: "builder",
         element: <ModelBuilderPage />,
@@ -79,8 +73,6 @@ const router = createBrowserRouter([
         path: "builder/:modelName/edit",
         element: <ModelFormBuilderPage mode="edit" />,
       },
-
-      // ── Dynamic model routes ──────────────────────────────────
       {
         path: ":model",
         element: <ModelListPage />,
@@ -97,8 +89,6 @@ const router = createBrowserRouter([
         path: ":model/:id",
         element: <ModelDetailPage />,
       },
-
-      // ── 404 ───────────────────────────────────────────────────
       {
         path: "*",
         element: <NotFound />,
@@ -107,7 +97,6 @@ const router = createBrowserRouter([
   },
 ]);
 
-// ── Root App ──────────────────────────────────────────────────────
 const App = () => (
   <>
     <RouterProvider router={router} />

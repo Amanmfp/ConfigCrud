@@ -98,7 +98,7 @@ const RelationField = ({ field, control, error }: FieldProps) => {
             const next = selectedIds.includes(id)
               ? selectedIds.filter((v) => v !== id)
               : [...selectedIds, id];
-            rhfField.onChange(next);   // ← RHF onChange, not prop
+            rhfField.onChange(next);  
           };
  
           return (
@@ -167,7 +167,7 @@ const RelationField = ({ field, control, error }: FieldProps) => {
                 value={selectedId ?? ""}
                 onChange={(e) => {
                   const val = e.target.value;
-                  rhfField.onChange(val === "" ? undefined : val); // store id string
+                  rhfField.onChange(val === "" ? undefined : val); 
                 }}
                 onBlur={rhfField.onBlur}
                 className={`w-full px-3 py-2 text-sm text-gray-800 bg-gray-50 border rounded-lg

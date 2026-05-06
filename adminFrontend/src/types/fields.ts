@@ -10,6 +10,5 @@ export type FieldProps = {
   register: UseFormRegister<any>;
   control: Control<any>;
   error?: FieldError;
-  // removed: value? and onChange? — all fields now use RHF register/Controller
 };
  

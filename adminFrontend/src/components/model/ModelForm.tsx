@@ -7,7 +7,7 @@ type Props = {
   editingItem: any | null;
   onSubmit: (data: any) => void;
   onCancelEdit: () => void;
-  registerReset?: (fn: () => void) => void; // ← NEW
+  registerReset?: (fn: () => void) => void; 
 };
  
 const ModelForm = ({ model, schema, editingItem, onSubmit, onCancelEdit, registerReset }: Props) => (
@@ -40,7 +40,7 @@ const ModelForm = ({ model, schema, editingItem, onSubmit, onCancelEdit, registe
         schema={schema}
         onSubmit={onSubmit}
         initialData={editingItem}
-        registerReset={registerReset}  // ← passed through
+        registerReset={registerReset}
       />
     </div>
   </div>
