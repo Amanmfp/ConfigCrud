@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
  
-const BASE = import.meta.env.VITE_API_URL ?? "http://localhost:3000/api";
+// const BASE = import.meta.env.VITE_API_URL ?? "http://localhost:3000/api";
+const BASE = 'https://configcrud.onrender.com/api'
  
 export type ModelMeta = {
   _id?:   string;

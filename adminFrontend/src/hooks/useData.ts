@@ -1,16 +1,7 @@
-// import { useQuery } from "@tanstack/react-query";
-// import { getList } from "../api";
-
-// export const useData = (model: string) => {
-//   return useQuery<Record<string, any>[]>({
-//     queryKey: ["data", model],
-//     queryFn: () => getList(model),
-//   });
-// };
-
 import { useQuery } from "@tanstack/react-query";
  
-const BASE = import.meta.env.VITE_API_URL ?? "http://localhost:3000/api";
+// const BASE = import.meta.env.VITE_API_URL ?? "http://localhost:3000/api";
+const BASE = 'https://configcrud.onrender.com/api'
  
 type DataResponse = {
   data:  Record<string, any>[];
