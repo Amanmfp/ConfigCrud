@@ -71,7 +71,7 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
  
 // ── DB + Server start ─────────────────────────────────────────────
 const start = async (): Promise<void> => {
-  const uri = process.env.MONGO_URI ?? "mongodb://localhost:27017/admin_panel";
+  const uri = process.env.MONGO_URI ?? "mongodb+srv://amanmfp025_db_user:tKO5rny9P8Gk3nZ1@cluster0.lzoivdw.mongodb.net/";
  
   mongoose.connection.on("connected",    () => console.log("✅ MongoDB connected"));
   mongoose.connection.on("disconnected", () => console.log("⚠️  MongoDB disconnected"));

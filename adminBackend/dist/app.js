@@ -72,7 +72,7 @@ app.use((err, req, res, next) => {
 // ── DB + Server start ─────────────────────────────────────────────
 const start = () => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
-    const uri = (_a = process.env.MONGO_URI) !== null && _a !== void 0 ? _a : "mongodb://localhost:27017/admin_panel";
+    const uri = (_a = process.env.MONGO_URI) !== null && _a !== void 0 ? _a : "mongodb+srv://amanmfp025_db_user:tKO5rny9P8Gk3nZ1@cluster0.lzoivdw.mongodb.net/";
     mongoose_1.default.connection.on("connected", () => console.log("✅ MongoDB connected"));
     mongoose_1.default.connection.on("disconnected", () => console.log("⚠️  MongoDB disconnected"));
     mongoose_1.default.connection.on("error", (err) => console.error("❌ MongoDB error:", err.message));
