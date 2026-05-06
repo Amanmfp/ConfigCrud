@@ -22,7 +22,7 @@ const AdminLayout = () => {
 
   const activeModel = useMemo(() => {
     const segment = location.pathname.split("/")[1];
-    return models.find((m) => m.name === segment)?.name ?? segment;
+    return models.find((m:any) => m.name === segment)?.name ?? segment;
   }, [location.pathname, models]);
  
   const handleModelSelect = useCallback(
