@@ -1,5 +1,3 @@
-// utils/buildZodSchema.ts
-
 import { z } from "zod";
 import type { Field } from "../types/schema";
 

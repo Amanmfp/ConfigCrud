@@ -1,23 +1,22 @@
-// App.tsx — React Router v7
- 
-import { lazy }                 from "react";
+import { lazy } from "react";
 import {
   createBrowserRouter,
   RouterProvider,
   Navigate,
   useParams,
-}                           from "react-router-dom";
-import { Toaster }          from "sonner";
-import AdminLayout          from "./components/layout/AdminLayout";
- 
+} from "react-router-dom";
+import { Toaster } from "sonner";
+import AdminLayout from "./components/layout/AdminLayout";
+import NotFound from "./pages/NotFound";
+
 // ── Lazy loaded pages ─────────────────────────────────────────────
-const ListPage             = lazy(() => import("./pages/model/ListPage"));
-const CreatePage           = lazy(() => import("./pages/model/CreatePage"));
-const EditPage             = lazy(() => import("./pages/model/EditPage"));
-const DetailPage           = lazy(() => import("./pages/model/DetailPage"));
-const ModelBuilderPage     = lazy(() => import("./pages/ModelBuilderPage"));
+const ListPage = lazy(() => import("./pages/model/ListPage"));
+const CreatePage = lazy(() => import("./pages/model/CreatePage"));
+const EditPage = lazy(() => import("./pages/model/EditPage"));
+const DetailPage = lazy(() => import("./pages/model/DetailPage"));
+const ModelBuilderPage = lazy(() => import("./pages/ModelBuilderPage"));
 const ModelFormBuilderPage = lazy(() => import("./pages/ModelFormBuilderPage"));
- 
+
 const AppError = ({ message }: { message: string }) => (
   <div className="flex items-center justify-center min-h-screen bg-gray-50">
     <div className="text-center space-y-3">
@@ -32,47 +31,41 @@ const AppError = ({ message }: { message: string }) => (
     </div>
   </div>
 );
- 
-// ── Root layout ───────────────────────────────────────────────────
-// AdminLayout handles <Outlet /> and <Suspense> internally
-// No wrapper needed — use it directly as the route element
+
 const RootLayout = AdminLayout;
- 
+
 // ── Page components ───────────────────────────────────────────────
 const ModelListPage = () => {
   const { model } = useParams<{ model: string }>();
   return model ? <ListPage model={model} /> : null;
 };
- 
+
 const ModelCreatePage = () => {
   const { model } = useParams<{ model: string }>();
   return model ? <CreatePage model={model} /> : null;
 };
- 
+
 const ModelEditPage = () => {
   const { model, id } = useParams<{ model: string; id: string }>();
   return model && id ? <EditPage model={model} id={id} /> : null;
 };
- 
+
 const ModelDetailPage = () => {
   const { model, id } = useParams<{ model: string; id: string }>();
   return model && id ? <DetailPage model={model} id={id} /> : null;
 };
- 
+
 // ── Router ────────────────────────────────────────────────────────
 const router = createBrowserRouter([
   {
     element: <RootLayout />,
-    // Top-level error boundary — catches loader/render errors
     errorElement: <AppError message="Something went wrong. Please refresh." />,
     children: [
- 
-      // Index → always goes to builder, no API call needed
       {
         index: true,
-        element: <Navigate to="/builder" replace />,  // ← static, no useModels()
+        element: <Navigate to="/builder" replace />,
       },
- 
+
       // ── Builder routes ────────────────────────────────────────
       {
         path: "builder",
@@ -86,7 +79,7 @@ const router = createBrowserRouter([
         path: "builder/:modelName/edit",
         element: <ModelFormBuilderPage mode="edit" />,
       },
- 
+
       // ── Dynamic model routes ──────────────────────────────────
       {
         path: ":model",
@@ -97,23 +90,23 @@ const router = createBrowserRouter([
         element: <ModelCreatePage />,
       },
       {
-        path: ":model/:id/edit",  // edit before :id to avoid conflict
+        path: ":model/:id/edit",
         element: <ModelEditPage />,
       },
       {
         path: ":model/:id",
         element: <ModelDetailPage />,
       },
- 
+
       // ── 404 ───────────────────────────────────────────────────
       {
         path: "*",
-        element: <Navigate to="/builder" replace />,
-      },
+        element: <NotFound />,
+      }
     ],
   },
 ]);
- 
+
 // ── Root App ──────────────────────────────────────────────────────
 const App = () => (
   <>
@@ -121,6 +114,5 @@ const App = () => (
     <Toaster position="bottom-right" richColors closeButton duration={4000} />
   </>
 );
- 
+
 export default App;
- 
